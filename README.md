@@ -1,2 +1,2 @@
-# lab2
-MLOps Lab 2
+# Jenkins
+MLOps Lab 6
