@@ -24,6 +24,10 @@ pipeline {
                 sh '''
                     . venv/bin/activate
                     python train.py
+
+                    echo "Workspace content:"
+                    pwd
+                    ls -R
                 '''
             }
         }
