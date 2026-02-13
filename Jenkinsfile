@@ -37,8 +37,8 @@ pipeline {
                 script {
                     def metrics = readJSON file: 'outputs/metrics/results.json'
 
-                    env.NEW_R2 = metrics.r2.toString()
-                    env.NEW_MSE = metrics.mse.toString()
+                    env.NEW_R2 = metrics.R2.toString()
+                    env.NEW_MSE = metrics.MSE.toString()
 
                     echo "New R2: ${env.NEW_R2}"
                     echo "New MSE: ${env.NEW_MSE}"
