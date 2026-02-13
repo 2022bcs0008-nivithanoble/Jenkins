@@ -28,23 +28,39 @@ pipeline {
             }
         }
 
-        stage('Read Accuracy') {
+        stage('Read Metrics') {
             steps {
                 script {
-                    def metrics = readJSON file: 'app/artifacts/metrics.json'
-                    env.NEW_ACCURACY = metrics.accuracy.toString()
-                    echo "New Accuracy: ${env.NEW_ACCURACY}"
+                    // Read full JSON as string
+                    def content = readFile('app/artifacts/metrics.json').trim()
+
+                    // Extract values using Groovy regex (no plugin needed)
+                    def r2 = (content =~ /"r2"\s*:\s*([0-9.]+)/)[0][1]
+                    def mse = (content =~ /"mse"\s*:\s*([0-9.]+)/)[0][1]
+
+                    env.NEW_R2 = r2
+                    env.NEW_MSE = mse
+
+                    echo "New R2: ${env.NEW_R2}"
+                    echo "New MSE: ${env.NEW_MSE}"
                 }
             }
         }
 
-        stage('Compare Accuracy') {
+        stage('Compare Metrics') {
             steps {
                 script {
-                    withCredentials([string(credentialsId: 'best-accuracy', variable: 'BEST_ACC')]) {
-                        if (env.NEW_ACCURACY.toFloat() > BEST_ACC.toFloat()) {
+                    withCredentials([
+                        string(credentialsId: 'best-r2', variable: 'BEST_R2'),
+                        string(credentialsId: 'best-rmse', variable: 'BEST_MSE')
+                    ]) {
+
+                        if (env.NEW_R2.toFloat() > BEST_R2.toFloat() &&
+                            env.NEW_MSE.toFloat() < BEST_MSE.toFloat()) {
+
                             env.MODEL_IMPROVED = "true"
                             echo "Model improved"
+
                         } else {
                             env.MODEL_IMPROVED = "false"
                             echo "Model did not improve"
@@ -74,7 +90,5 @@ pipeline {
                 }
             }
         }
-
-
     }
 }
