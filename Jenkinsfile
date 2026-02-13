@@ -32,7 +32,7 @@ pipeline {
             steps {
                 script {
                     // Read full JSON as string
-                    def content = readFile('app/artifacts/metrics.json').trim()
+                    def content = readFile('outputs/metrics/results.json').trim()
 
                     // Extract values using Groovy regex (no plugin needed)
                     def r2 = (content =~ /"r2"\s*:\s*([0-9.]+)/)[0][1]
