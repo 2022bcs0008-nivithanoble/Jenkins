@@ -1,0 +1,112 @@
+name: ML Training Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run training script
+      run: |
+        python train.py
+
+    - name: Job Summary
+      run: |
+        echo "## ML Training Results" >> $GITHUB_STEP_SUMMARY
+        echo "**Name:** Nivitha Noble" >> $GITHUB_STEP_SUMMARY
+        echo "**Roll Number:** 2022BCS0008" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Metrics" >> $GITHUB_STEP_SUMMARY
+        cat outputs/metrics/results.json >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: trained-model-and-metrics
+        path: |
+          outputs/model/model.pkl
+          outputs/metrics/results.json
+  
+  deploy:
+    needs: train
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Download training artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: trained-model-and-metrics
+      
+      - name: Read metric and compare
+        id: compare
+        run: |
+          NEW_R2=$(jq -r '.R2' outputs/metrics/results.json)
+          NEW_MSE=$(jq -r '.MSE' outputs/metrics/results.json)
+
+          BEST_R2=${{ vars.BEST_R2 }}
+          BEST_MSE=${{ vars.BEST_MSE }}
+
+          echo "New_R2: $NEW_R2"
+          echo "Best_R2: $BEST_R2"
+
+          echo "New_MSE: $NEW_MSE"
+          echo "Best_MSE: $BEST_MSE"
+
+          if (($(echo "$NEW_R2 <= $BEST_R2" | bc -l))) || (($(echo "$NEW_MSE >= $BEST_MSE" | bc -l))); then
+            echo "2022BCS0008 - Metric did not improve"
+            echo "DEPLOY=false" >> $GITHUB_ENV
+          else
+            echo "2022BCS0008 - Metric improved"
+            echo "DEPLOY=true" >> $GITHUB_ENV
+            echo "New_R2=$NEW_R2" >> $GITHUB_ENV
+            echo "New_MSE=$NEW_MSE" >> $GITHUB_ENV
+          fi
+
+      - name: Login to Docker
+        if: env.DEPLOY == 'true'
+        run: |
+          echo ${{ secrets.DOCKERHUB_TOKEN }} | docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+      
+      - name: Build docker image
+        if: env.DEPLOY == 'true'
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/wine_predict_2022bcs0008:v02 .
+
+      - name: Push docker image
+        if: env.DEPLOY == 'true'
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/wine_predict_2022bcs0008:v02
+
+
+      - name: Update best metrics
+        if: env.DEPLOY == 'true'
+        env: 
+          GH_TOKEN: ${{ secrets.GIT_ACCESS_TOKEN }}
+        run: |
+          gh variable set BEST_R2 --body "${New_R2}"
+          gh variable set BEST_MSE --body "${New_MSE}"
+
+
+
+
