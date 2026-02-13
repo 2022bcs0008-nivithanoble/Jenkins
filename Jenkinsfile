@@ -35,15 +35,10 @@ pipeline {
         stage('Read Metrics') {
             steps {
                 script {
-                    // Read full JSON as string
-                    def content = readFile('outputs/metrics/results.json').trim()
+                    def metrics = readJSON file: 'outputs/metrics/results.json'
 
-                    // Extract values using Groovy regex (no plugin needed)
-                    def r2 = (content =~ /"r2"\s*:\s*([0-9.]+)/)[0][1]
-                    def mse = (content =~ /"mse"\s*:\s*([0-9.]+)/)[0][1]
-
-                    env.NEW_R2 = r2
-                    env.NEW_MSE = mse
+                    env.NEW_R2 = metrics.r2.toString()
+                    env.NEW_MSE = metrics.mse.toString()
 
                     echo "New R2: ${env.NEW_R2}"
                     echo "New MSE: ${env.NEW_MSE}"
