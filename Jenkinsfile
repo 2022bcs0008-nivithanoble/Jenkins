@@ -154,7 +154,7 @@ pipeline {
             steps {
                 script {
                     sh '''
-                        RESPONSE=$(curl -s -X POST "http://localhost:8001/predict" \
+                        RESPONSE=$(curl -s -X POST "http://$CONTAINER_IP:8000/predict" \
                         -H "Content-Type: application/json" \
                         -d '{
                             "fixed_acidity":1,
@@ -183,7 +183,7 @@ pipeline {
                 script {
                     sh '''
                         STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-                        -X POST "http://localhost:8001/predict" \
+                        -X POST "http://$CONTAINER_IP:8000/predict" \
                         -H "Content-Type: application/json" \
                         -d '{"invalid":"data"}')
 
