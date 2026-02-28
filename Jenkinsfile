@@ -117,21 +117,34 @@ pipeline {
             }
         }
 
-        stage('Service Readiness'){
+        stage('Service Readiness') {
             steps {
                 script {
                     sh '''
                         echo "Waiting for API to be ready..."
-                        for i in {1..10}; do
+
+                        for i in 1 2 3 4 5 6 7 8 9 10 11 12
+                        do
                             sleep 5
-                            curl -s http://localhost:8001/docs > /dev/null && exit 0
+
+                            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/docs || true)
+
+                            echo "Attempt $i - Status: $STATUS"
+
+                            if [ "$STATUS" = "200" ]; then
+                                echo "Service is ready"
+                                exit 0
+                            fi
                         done
-                        echo "Service did not start in time"
+
+                        echo "Service did not become ready"
+                        docker logs wine_test_container
                         exit 1
                     '''
                 }
             }
         }
+        
 
         stage('Valid Inference'){
             steps {
