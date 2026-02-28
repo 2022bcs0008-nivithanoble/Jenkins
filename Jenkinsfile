@@ -124,7 +124,7 @@ pipeline {
                 script {
                     sh '''
                         echo "Waiting for API to be ready..."
-                        CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wine_test_container)
+                        CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' bcs8_wine_test_jenkins)
                         echo "Container IP: $CONTAINER_IP"
 
                         for i in 1 2 3 4 5 6 7 8 9 10 11 12
