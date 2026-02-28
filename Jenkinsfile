@@ -112,6 +112,8 @@ pipeline {
                 script{
                     sh '''
                         docker run -d -p 8001:8000 --name bcs8_wine_test_jenkins 2022bcs0008nivithanoble/wine_predict_2022bcs0008:${BUILD_NUMBER}
+                        sleep 5
+                        docker ps
                     '''
                 }
             }
@@ -122,12 +124,14 @@ pipeline {
                 script {
                     sh '''
                         echo "Waiting for API to be ready..."
+                        CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' wine_test_container)
+                        echo "Container IP: $CONTAINER_IP"
 
                         for i in 1 2 3 4 5 6 7 8 9 10 11 12
                         do
                             sleep 5
 
-                            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8001/docs || true)
+                            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://CONTAINER_IP:8001/docs || true)
 
                             echo "Attempt $i - Status: $STATUS"
 
