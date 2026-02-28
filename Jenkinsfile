@@ -131,7 +131,7 @@ pipeline {
                         do
                             sleep 5
 
-                            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://CONTAINER_IP:8001/docs || true)
+                            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://$CONTAINER_IP:8000/docs || true)
 
                             echo "Attempt $i - Status: $STATUS"
 
@@ -142,7 +142,7 @@ pipeline {
                         done
 
                         echo "Service did not become ready"
-                        docker logs wine_test_container
+                        docker logs bcs8_wine_test_jenkins
                         exit 1
                     '''
                 }
