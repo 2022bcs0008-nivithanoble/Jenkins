@@ -154,6 +154,7 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' bcs8_wine_test_jenkins)
                         RESPONSE=$(curl -s -X POST "http://$CONTAINER_IP:8000/predict" \
                         -H "Content-Type: application/json" \
                         -d '{
@@ -182,6 +183,7 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        CONTAINER_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' bcs8_wine_test_jenkins)
                         STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
                         -X POST "http://$CONTAINER_IP:8000/predict" \
                         -H "Content-Type: application/json" \
